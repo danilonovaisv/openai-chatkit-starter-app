@@ -1,0 +1,4 @@
+script = ".codex/config.py"
+
+[metadata]
+description = "Config aponta para o script Python. O arquivo original continha código Python inválido para TOML."
