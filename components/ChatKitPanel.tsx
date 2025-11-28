@@ -35,6 +35,29 @@ type ErrorState = {
 const isBrowser = typeof window !== "undefined";
 const isDev = process.env.NODE_ENV !== "production";
 
+const formatChatkitError = (
+  error: unknown
+): { message: string; retryable: boolean } => {
+  if (error && typeof error === "object") {
+    const typed = error as { message?: unknown; name?: unknown; allowRetry?: unknown };
+    const message =
+      typeof typed.message === "string"
+        ? typed.message
+        : typeof typed.name === "string"
+          ? typed.name
+          : null;
+    return {
+      message: message ?? "The assistant hit an unexpected error. Please try again.",
+      retryable: Boolean(typed.allowRetry ?? true),
+    };
+  }
+
+  return {
+    message: "The assistant hit an unexpected error. Please try again.",
+    retryable: true,
+  };
+};
+
 const createInitialErrors = (): ErrorState => ({
   script: null,
   session: null,
@@ -324,9 +347,10 @@ export function ChatKitPanel({
       processedFacts.current.clear();
     },
     onError: ({ error }: { error: unknown }) => {
-      // Note that Chatkit UI handles errors for your users.
-      // Thus, your app code doesn't need to display errors on UI.
       console.error("ChatKit error", error);
+      const { message, retryable } = formatChatkitError(error);
+      setErrorState({ integration: message, retryable });
+      setIsInitializingSession(false);
     },
   });
 
